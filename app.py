@@ -1,39 +1,44 @@
 import streamlit as st
-import random
-import pandas as pd
-import numpy as np
+import scipy.stats
+import time
 
-st.header('Lanzar una moneda: Simulador Avanzado')
+st.header('Lanzar una moneda')
 
-# 1. Widget de entrada: Control deslizante
-number_of_trials = st.slider('¿Número de intentos?', 1, 1000, 100)
+# Inicializamos el gráfico con un valor base de 0.5
+chart = st.line_chart([0.5])
 
-# 2. Widget de botón
-start_button = st.button('Ejecutar experimento')
+# Función para emular lanzamientos y actualizar gráfico
+def toss_coin(n): 
+    # Genera n lanzamientos (0 o 1) con 50% de probabilidad
+    trial_outcomes = scipy.stats.bernoulli.rvs(p=0.5, size=n)
+    
+    mean = None
+    outcome_no = 0
+    outcome_1_count = 0
+    
+    for r in trial_outcomes:
+        outcome_no += 1
+        if r == 1:
+            outcome_1_count += 1
+        
+        # Calcula el promedio acumulado hasta el momento
+        mean = outcome_1_count / outcome_no
+        
+        # --- AQUÍ ESTÁ LA MAGIA ---
+        # Añade la nueva media al gráfico
+        chart.add_rows([mean])
+        
+        # Pausa pequeña para visualizar el efecto
+        time.sleep(0.05)
+        
+    return mean
 
+# --- Widgets ---
+number_of_trials = st.slider('¿Número de intentos?', 1, 1000, 10)
+start_button = st.button('Ejecutar')
+
+# --- Lógica al presionar el botón ---
 if start_button:
-    st.write(f'Iniciando experimento con {number_of_trials} intentos...')
-    
-    # --- Lógica de negocio ---
-    # Generar resultados (0 = Cara, 1 = Cruz)
-    results = [random.choice([0, 1]) for _ in range(number_of_trials)]
-    
-    # Crear un DataFrame para los resultados
-    df = pd.DataFrame(results, columns=['Resultado'])
-    df['Intento'] = range(1, number_of_trials + 1)
-    
-    # Calcular promedio acumulado
-    df['Promedio Acumulado'] = df['Resultado'].cumsum() / df['Intento']
-    
-    # --- Visualización ---
-    
-    # 3. Gráfico de líneas (Progreso)
-    st.subheader('Progreso del experimento')
-    st.line_chart(df['Promedio Acumulado'])
-    
-    # 4. Tabla de resultados (Dataframe)
-    st.subheader('Tabla de resultados')
-    st.write(df)
-
-st.write('---')
-st.write('Desarrollado con Streamlit.')
+    st.write(f'Experimento con {number_of_trials} intentos en curso.')
+    toss_coin(number_of_trials)
+    st.write('¡Experimento finalizado!')
